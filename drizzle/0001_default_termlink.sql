@@ -1,0 +1,1 @@
+ALTER TABLE "terminals" ALTER COLUMN "firmware" SET DEFAULT 'termlink';

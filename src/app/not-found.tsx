@@ -3,7 +3,7 @@ import { Terminal } from "@/components/Terminal";
 
 export default function NotFound() {
   return (
-    <Crt firmware="uos" phosphor="green">
+    <Crt firmware="termlink" phosphor="green">
       <Terminal
         back="/"
         blocks={[

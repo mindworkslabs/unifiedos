@@ -18,6 +18,7 @@ Status markers: ✅ built in v1 · 🔜 planned.
 
 ## 2. Roles
 
+- **Default firmware:** RobCo Termlink (Series 4, the Fallout 4 style). Operators can switch to UOS (Series 3) in Terminal Configuration. ✅
 - **Operator** (owner). Logs on with username + password, from `/logon` or `LOGON <USER>` at their own address. Has full control. ✅
 - **Intruder**. Anyone who wins the hacking game at `/<slug>`. Gets **read-only** access to that terminal's files and mail for 30 minutes. Every screen shows `>> MAINTENANCE MODE: READ ONLY (N MIN REMAINING)`. They cannot edit, delete, send, or open configuration or the access log. ✅
 - **Visitor**. Sees the boot screen, `Password Required`, and the choices *Logon*, *Enter Maintenance Mode* (hack) and *Disconnect*. ✅

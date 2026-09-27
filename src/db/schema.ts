@@ -31,7 +31,7 @@ export const terminals = pgTable("terminals", {
   name: text("name").notNull(),
   welcome: text("welcome").notNull().default(""),
   serverNo: integer("server_no").notNull().default(1),
-  firmware: text("firmware").$type<"uos" | "termlink">().notNull().default("uos"),
+  firmware: text("firmware").$type<"uos" | "termlink">().notNull().default("termlink"),
   phosphor: text("phosphor").$type<"green" | "amber" | "white" | "blue">().notNull().default("green"),
   securityLevel: integer("security_level").notNull().default(3),
   /** Seconds an intruder is locked out after four misses. 0 = until the owner resets it. */
