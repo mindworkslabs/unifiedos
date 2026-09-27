@@ -1,4 +1,5 @@
 import { cycleSetting, resetLockouts } from "@/app/actions/config";
+import { backItem } from "@/components/screen";
 import { Terminal } from "@/components/Terminal";
 import { requireOwner } from "@/lib/access";
 import { FIRMWARE_LABEL } from "@/lib/firmware";
@@ -41,7 +42,7 @@ export default async function ConfigPage({ params }: { params: Promise<{ slug: s
             { label: `Maintenance Reset Exploit: ${t.exploitEnabled ? "UNPATCHED" : "PATCHED"}`, action: cycle("exploitEnabled") },
             { label: "[Reset All Lockouts]", action: resetLockouts.bind(null, t.slug) },
             { label: "[Change Password]", href: `${base}/config/password` },
-            { label: "Back", href: base },
+            ...backItem(t.firmware, base),
           ],
         },
       ]}

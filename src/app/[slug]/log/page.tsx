@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import type { Block } from "@/components/screen";
+import { backItem, type Block } from "@/components/screen";
 import { Terminal } from "@/components/Terminal";
 import { getDb } from "@/db";
 import { accessLog } from "@/db/schema";
@@ -37,7 +37,7 @@ export default async function LogPage({ params }: { params: Promise<{ slug: stri
         { t: "gap" },
         ...(lines.length ? lines : [{ t: "line", text: "No events recorded.", dim: true } as Block]),
         { t: "gap" },
-        { t: "menu", items: [{ label: "Back", href: `/${access.terminal.slug}` }] },
+        { t: "menu", items: backItem(access.terminal.firmware, `/${access.terminal.slug}`) },
       ]}
     />
   );

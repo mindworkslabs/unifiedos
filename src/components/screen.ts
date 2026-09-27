@@ -18,7 +18,8 @@ export interface MenuItem {
 }
 
 export type Block =
-  | { t: "line"; text: string; center?: boolean; dim?: boolean; blink?: boolean }
+  /** `underline`: UOS separator drawn under this line, exactly as wide as its text. */
+  | { t: "line"; text: string; center?: boolean; dim?: boolean; blink?: boolean; underline?: boolean }
   | { t: "text"; text: string }
   | { t: "rule" }
   | { t: "gap" }
@@ -45,8 +46,15 @@ export function terminalHeader(opts: {
     { t: "line", text: "COPYRIGHT 2075-2077 ROBCO INDUSTRIES", center: true },
     { t: "line", text: `-Server ${opts.serverNo}-`, center: true },
     { t: "gap" },
-    { t: "line", text: opts.welcome },
+    { t: "line", text: opts.welcome, underline: true },
     ...status,
-    { t: "rule" },
   ];
+}
+
+/**
+ * A "Back" entry. FO3/NV add one to every submenu automatically (sComputersBack);
+ * FO4 has none — Tab / the "TAB) EXIT" button goes back.
+ */
+export function backItem(firmware: Firmware, href: string): MenuItem[] {
+  return firmware === "uos" ? [{ label: "Back", href }] : [];
 }

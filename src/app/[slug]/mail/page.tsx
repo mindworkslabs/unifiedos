@@ -1,4 +1,4 @@
-import type { MenuItem } from "@/components/screen";
+import { backItem, type MenuItem } from "@/components/screen";
 import { Terminal } from "@/components/Terminal";
 import { requireRead } from "@/lib/access";
 import { listMail } from "@/lib/mail";
@@ -16,7 +16,7 @@ export default async function MailHome({ params }: { params: Promise<{ slug: str
     { label: "Sent", href: `${base}/mail/sent` },
   ];
   if (access.role === "owner") items.push({ label: "[Compose Message]", href: `${base}/mail/compose` });
-  items.push({ label: "Back", href: base });
+  items.push(...backItem(access.terminal.firmware, base));
   return (
     <Terminal
       back={base}

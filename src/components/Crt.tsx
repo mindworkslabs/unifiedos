@@ -36,6 +36,7 @@ export function Crt({
     };
   }, []);
 
+  const back = () => window.dispatchEvent(new Event(BACK_EVENT));
   const toggleFx = () => {
     const next = !fx;
     setFx(next);
@@ -64,10 +65,21 @@ export function Crt({
       </div>
       <div className="hints">
         <div className="group">
-          <button type="button" onClick={() => window.dispatchEvent(new Event(BACK_EVENT))}>
-            {firmware === "termlink" ? "Tab) Exit" : "Tab) Back"}
-          </button>
-          <span>Enter) Select</span>
+          {firmware === "uos" && (
+            <>
+              <button type="button" onClick={back}>
+                Tab) Back
+              </button>
+              <span>Enter) Select</span>
+            </>
+          )}
+        </div>
+        <div className="center">
+          {firmware === "termlink" && (
+            <button type="button" className="fo4-btn" onClick={back}>
+              Tab) <b>Exit</b>
+            </button>
+          )}
         </div>
         <div className="group">
           <button type="button" onClick={toggleSound} aria-pressed={sound}>

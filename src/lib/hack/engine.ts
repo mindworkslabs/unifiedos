@@ -8,11 +8,12 @@ import type { Firmware } from "@/lib/firmware";
 import WORDS from "./words.json";
 
 export const ROW_CHARS = 12;
+/** FO3/NV hacking_menu.xml: 17 rows per column. FO4 screenshots show 16. */
 export const ROWS_PER_COLUMN = 17;
+export const ROWS_BY_FIRMWARE: Record<Firmware, number> = { uos: 17, termlink: 16 };
 export const COLUMNS = 2;
-export const CELLS = ROW_CHARS * ROWS_PER_COLUMN * COLUMNS; // 408
+export const CELLS = ROW_CHARS * ROWS_PER_COLUMN * COLUMNS; // 408 (FO3/NV)
 export const MAX_ATTEMPTS = 4;
-export const LOG_LINES = ROWS_PER_COLUMN - 1;
 
 /** The exact 30-character junk set from the New Vegas executable (no & or ~). */
 export const JUNK = "!@#$%^*()_+=-`[]{}|;':,./<>?\\\"";
@@ -29,6 +30,8 @@ export interface PlacedWord {
 
 export interface BoardState {
   grid: string;
+  /** Rows per column (17 FO3/NV, 16 FO4). Older boards lack it → 17. */
+  rows?: number;
   baseAddress: number;
   words: PlacedWord[];
   password: string;
@@ -42,6 +45,7 @@ export interface BoardState {
 /** What the browser is allowed to see: everything except the password. */
 export interface PublicBoard {
   grid: string;
+  rows: number;
   baseAddress: number;
   words: { start: number; length: number; removed: boolean }[];
   usedBrackets: number[];
@@ -131,7 +135,8 @@ function junkChar(rng: Rng) {
   return JUNK[Math.floor(rng() * JUNK.length)];
 }
 
-export function generateBoard(level: number, rng: Rng = Math.random): BoardState {
+export function generateBoard(level: number, rng: Rng = Math.random, rows = ROWS_PER_COLUMN): BoardState {
+  const cellCount = ROW_CHARS * rows * COLUMNS;
   const cfg = SECURITY_LEVELS[level] ?? SECURITY_LEVELS[3];
   const length = randInt(rng, cfg.lengths[0], cfg.lengths[1]);
   const { password, words } = pickWords(rng, length, cfg.count);
@@ -143,9 +148,9 @@ export function generateBoard(level: number, rng: Rng = Math.random): BoardState
   }
 
   for (let tries = 0; ; tries++) {
-    const cells: string[] = Array.from({ length: CELLS }, () => junkChar(rng));
+    const cells: string[] = Array.from({ length: cellCount }, () => junkChar(rng));
     // One word per equal segment, with at least one junk char separating words.
-    const segment = Math.floor(CELLS / words.length);
+    const segment = Math.floor(cellCount / words.length);
     const placed: PlacedWord[] = words.map((word, k) => {
       const slack = segment - word.length - 1;
       const start = k * segment + randInt(rng, 0, Math.max(0, slack));
@@ -157,6 +162,7 @@ export function generateBoard(level: number, rng: Rng = Math.random): BoardState
     if ((groups.size >= 4 && groups.size <= 14) || tries > 50) {
       return {
         grid,
+        rows,
         baseAddress: 0xf000 + randInt(rng, 0, 0x900 / 4) * 4,
         words: placed,
         password,
@@ -173,6 +179,7 @@ export function generateBoard(level: number, rng: Rng = Math.random): BoardState
 export function toPublic(board: BoardState): PublicBoard {
   return {
     grid: board.grid,
+    rows: board.rows ?? ROWS_PER_COLUMN,
     baseAddress: board.baseAddress,
     words: board.words.map((w) => ({ start: w.start, length: w.word.length, removed: w.removed })),
     usedBrackets: board.usedBrackets,
@@ -204,8 +211,10 @@ const STRINGS = {
   },
 } as const;
 
-function pushLog(board: BoardState, lines: readonly string[]) {
-  board.log = [...board.log, ...lines].slice(-LOG_LINES);
+function pushLog(board: BoardState, lines: readonly string[], firmware: Firmware) {
+  // The log keeps (board height − 1) lines; FO3/NV leave one more blank row above the prompt.
+  const keep = (board.rows ?? ROWS_PER_COLUMN) - (firmware === "uos" ? 2 : 1);
+  board.log = [...board.log, ...lines].slice(-keep);
 }
 
 /** The word (if any) covering a grid position. */
@@ -222,7 +231,7 @@ export interface SelectOptions {
 
 /** Apply a selection at grid position `pos`. Mutates and returns the board. */
 export function select(board: BoardState, pos: number, opts: SelectOptions): BoardState {
-  if (board.status !== "active" || pos < 0 || pos >= CELLS) return board;
+  if (board.status !== "active" || pos < 0 || pos >= board.grid.length) return board;
   const s = STRINGS[opts.firmware];
   const rng = opts.rng ?? Math.random;
 
@@ -230,15 +239,15 @@ export function select(board: BoardState, pos: number, opts: SelectOptions): Boa
   if (word) {
     if (word.word === board.password) {
       board.status = "success";
-      pushLog(board, [`>${word.word}`, ...s.success]);
+      pushLog(board, [`>${word.word}`, ...s.success], opts.firmware);
       return board;
     }
     board.attemptsLeft -= 1;
     const n = likeness(word.word, board.password);
-    pushLog(board, [`>${word.word}`, s.denied, s.likeness(n, board.password.length)]);
+    pushLog(board, [`>${word.word}`, s.denied, s.likeness(n, board.password.length)], opts.firmware);
     if (board.attemptsLeft <= 0) {
       board.status = "locked";
-      pushLog(board, s.lockout);
+      pushLog(board, s.lockout, opts.firmware);
     }
     return board;
   }
@@ -253,20 +262,20 @@ export function select(board: BoardState, pos: number, opts: SelectOptions): Boa
     if (canReset && (duds.length === 0 || rng() < (opts.resetChance ?? 0.25))) {
       board.resetUsed = true;
       board.attemptsLeft = MAX_ATTEMPTS;
-      pushLog(board, [echo, ...s.reset]);
+      pushLog(board, [echo, ...s.reset], opts.firmware);
     } else if (duds.length > 0) {
       const dud = duds[Math.floor(rng() * duds.length)];
       dud.removed = true;
       board.grid =
         board.grid.slice(0, dud.start) + ".".repeat(dud.word.length) + board.grid.slice(dud.start + dud.word.length);
-      pushLog(board, [echo, ...s.dud]);
+      pushLog(board, [echo, ...s.dud], opts.firmware);
     } else {
-      pushLog(board, [echo, s.denied]);
+      pushLog(board, [echo, s.denied], opts.firmware);
     }
     return board;
   }
 
-  pushLog(board, [`>${board.grid[pos]}`, ...s.junk]);
+  pushLog(board, [`>${board.grid[pos]}`, ...s.junk], opts.firmware);
   return board;
 }
 

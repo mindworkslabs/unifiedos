@@ -2,7 +2,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { deleteNode } from "@/app/actions/files";
-import type { Block, MenuItem } from "@/components/screen";
+import { backItem, type Block, type MenuItem } from "@/components/screen";
 import { getDb } from "@/db";
 import { nodes, type Node } from "@/db/schema";
 import type { Access } from "./access";
@@ -44,7 +44,7 @@ export async function folderScreen(access: Access, folder: Node | null): Promise
     }
   }
   const back = folder?.parentId ? `${base}/files/${folder.parentId}` : folder ? `${base}/files` : base;
-  items.push({ label: "Back", href: back });
+  items.push(...backItem(terminal.firmware, back));
 
   const title = folder ? folder.title : "Personal Files";
   const blocks: Block[] = [...headerFor(access), { t: "line", text: title }, { t: "gap" }];

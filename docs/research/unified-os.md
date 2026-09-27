@@ -633,3 +633,37 @@ We should **not** ship ripped `.wav` files, `FalloutDict.txt`, textures or logos
 | Codephenomenon/wasteland-terminal (JS, MIT) | `#1AFF80` with Share Tech Mono; power button; glass reflection |
 | Sraote/Sraote.github.io | a full palette (`#1bff80`, dim `#0d8544`, dark `#07381c`, background `#0b1c11`) |
 | Swordfish90/cool-retro-term (GPL-3) | reference CRT parameters |
+
+---
+
+## 14. Addendum: fidelity pass (verified against real screenshots and the vanilla UI source)
+
+These sources were added in the second pass:
+- 21 in-game screenshots from GitHub hacking-solver test sets:
+  - FO3/NV: owenmccadden/fallout-terminal-solver, bramucas/fallout_terminal_solver, Gwergilius/Enclave-Terminal-Breach
+  - FO4: lemmaandrew/fo4Terminal, erdembircan/fallout-terminal-decoder, andiikaa/fallout-terminal-hack
+  - FO76: MsZelia/EasyHackingLockpicking
+- A re-read of the decompiled FO4 `TerminalMenu` and the NV `computers_menu.xml` / `hacking_menu.xml`.
+
+### Corrections to earlier sections
+
+| Item | Finding | Source |
+|---|---|---|
+| FO4 hacking grid | **2 columns × 16 rows** (FO3/NV: 17). Each row is still `0xHHHH` + 12 characters, stepping 0x0C. | FO4 PC screenshots |
+| FO4 colours | Text is pure green, about `rgb(0,248,0)`. The background is neutral near-black, `rgb(5–6,6–8,6–7)`. Little vignette; bulging TV-shaped glass; fine scanlines (about 4 px at 1080p, 20% drop); tight green halo. | pixel sampling |
+| FO3/NV colours | Mint text, about `#36E68C`, on a *lit* dark-green screen (`#0F3421` centre fading to `#030C07`). Strong vignette; soft glare top-right; scanlines about 8 px at 1080p (±7%). | pixel sampling |
+| FO4 menu items | No prefix is added by the UI. `[Brackets]` come from the author's item text, and FO76 uses them for actions (e.g. `[Override Facility Lockdown]`). | FO76 footage, `BSScrollingListEntry.as` |
+| FO4 highlight bar | Solid, 100% opacity, black text. It is a fixed full-width bar about 37.5 px tall (1.3× the line). Item letter-spacing is 1 px. | `MenuItemListEntry.xml`, screenshots |
+| FO4 separator | None. Rules such as `---- SECURITY STATUS ----` are part of the author's text. | FLA, FO76 footage |
+| FO4 back navigation | No automatic Back item. Tab / `[Tab) EXIT]` calls BackLevel. | `TerminalButtons.as` |
+| FO4 help bar | `[Tab) EXIT]`, centred under the monitor. "Tab)" is Roboto Condensed Regular and "EXIT" is Bold, green with a black drop shadow, inside green corner brackets on a translucent dark-green fill. | screenshots |
+| FO4 paging | Display text is hard-wrapped and paged to fit the 716×498 body; Accept shows the next page. The list moves to 10 px below the text once the last page is shown. | `Terminal.as` 307-363 |
+| FO4 scroll arrows | Small triangles in the left margin when the 12-row list overflows. | `MenuItemList.xml` |
+| FO4 cursor | 12.5×18.5 px, blinking 5 frames on / 5 off (about 208 ms at 24 fps). It rides the typing head, then sits after the `>` prompt. | `BlinkingCursor.xml`, `Terminal.as` |
+| FO4 after logon | The prompt shows `> Password Accepted.` on the menu. | FO76 footage |
+| FO3/NV separator | As wide as the **welcome text** (not the full screen), 1 px, 10 px below it. | `computers_menu.xml` 150-164 |
+| FO3/NV result text | Cleared after `iComputersResultDisplayTimeout` = 5 s. | GMST |
+| FO3/NV hacking log | Newest entry 3 rows above the bottom, i.e. one blank row above the `>` prompt. | `hacking_menu.xml` 302-325, screenshots |
+| FO3/NV after a hack | Success text holds ≥2.5 s, then the logon intro plays at x=100: `WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK` / `LOGON ADMIN` / `ENTER PASSWORD NOW` / the password, a blank line apart. | `computers_menu.xml` 55-103, NV symbols, Stewie's tweak |
+
+All of these are implemented in the app. See `docs/product-spec.md`.

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { deleteMessage } from "@/app/actions/mail";
-import type { MenuItem } from "@/components/screen";
+import { backItem, type MenuItem } from "@/components/screen";
 import { Terminal } from "@/components/Terminal";
 import { logEvent, requireRead } from "@/lib/access";
 import { getMail, markRead } from "@/lib/mail";
@@ -24,7 +24,7 @@ export default async function MailView({ params }: { params: Promise<{ slug: str
     if (inbound) items.push({ label: "[Reply]", href: `${base}/mail/compose?re=${m.id}` });
     items.push({ label: "[Delete]", confirm: "Delete this message?", action: deleteMessage.bind(null, terminal.slug, m.id) });
   }
-  items.push({ label: "Back", href: back });
+  items.push(...backItem(terminal.firmware, back));
 
   return (
     <Terminal

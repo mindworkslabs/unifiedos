@@ -160,3 +160,14 @@ describe("formatAddress", () => {
     expect(formatAddress(0xf4f0)).toBe("0xF4F0");
   });
 });
+
+describe("firmware grid sizes", () => {
+  it("builds 16-row columns for Termlink (FO4) boards", () => {
+    const b = generateBoard(3, seeded(9), 16);
+    expect(b.grid.length).toBe(16 * 12 * 2);
+    expect(toPublic(b).rows).toBe(16);
+  });
+  it("defaults to 17 rows (FO3/NV)", () => {
+    expect(toPublic(generateBoard(3, seeded(9))).rows).toBe(17);
+  });
+});

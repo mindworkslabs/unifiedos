@@ -7,8 +7,15 @@ import { messages } from "@/db/schema";
 import { getAccess, getLockout } from "@/lib/access";
 import { headerFor } from "@/lib/screens";
 
-export default async function TerminalHome({ params }: { params: Promise<{ slug: string }> }) {
+export default async function TerminalHome({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ accepted?: string }>;
+}) {
   const { slug } = await params;
+  const { accepted } = await searchParams;
   const access = await getAccess(slug);
   const { terminal, owner } = access;
   const base = `/${terminal.slug}`;
@@ -68,5 +75,7 @@ export default async function TerminalHome({ params }: { params: Promise<{ slug:
   }
   items.push({ label: access.role === "owner" ? "Log Off" : "Disconnect", action: logoff.bind(null, terminal.slug) });
 
-  return <Terminal blocks={[...headerFor(access), { t: "menu", items }]} />;
+  // FO4/76 show "> Password Accepted." at the prompt right after logging on.
+  const greeting = accepted && terminal.firmware === "termlink" ? "Password Accepted." : undefined;
+  return <Terminal blocks={[...headerFor(access), { t: "menu", items }]} initialResponse={greeting} />;
 }

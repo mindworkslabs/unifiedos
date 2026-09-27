@@ -4,7 +4,7 @@ import { and, desc, eq, gt } from "drizzle-orm";
 import { getDb } from "@/db";
 import { hackSessions, type Terminal } from "@/db/schema";
 import { logEvent } from "@/lib/access";
-import { generateBoard } from "./engine";
+import { generateBoard, ROWS_BY_FIRMWARE } from "./engine";
 
 /** Cryptographically random [0, 1) so boards can't be predicted. */
 export const secureRng = () => randomInt(0, 2 ** 32) / 2 ** 32;
@@ -55,7 +55,7 @@ export async function loadOrCreateBoard(terminal: Terminal, visitorId: string) {
   if (existing) {
     await db.update(hackSessions).set({ status: "abandoned", updatedAt: new Date() }).where(eq(hackSessions.id, existing.id));
   }
-  const state = generateBoard(terminal.securityLevel, secureRng);
+  const state = generateBoard(terminal.securityLevel, secureRng, ROWS_BY_FIRMWARE[terminal.firmware]);
   const [created] = await db
     .insert(hackSessions)
     .values({ terminalId: terminal.id, visitorId, state, status: "active" })

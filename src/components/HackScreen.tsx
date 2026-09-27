@@ -7,7 +7,6 @@ import { HACK_HEADER, LOCKOUT_WARNING, TERMLINK_INTRO } from "@/lib/firmware";
 import {
   COLUMNS,
   ROW_CHARS,
-  ROWS_PER_COLUMN,
   findBracketGroups,
   formatAddress,
   type PublicBoard,
@@ -15,8 +14,19 @@ import {
 import * as sfx from "@/lib/sound";
 import { BACK_EVENT, FirmwareContext } from "./Crt";
 
-/** Termlink exploit script, typed like an operator at a keyboard. */
-function Intro({ onDone }: { onDone: () => void }) {
+/** Typed script: `>` lines are typed like an operator at a keyboard, others print fast. */
+function Intro({
+  onDone,
+  lines = TERMLINK_INTRO,
+  indent = false,
+  hold = 450,
+}: {
+  onDone: () => void;
+  lines?: string[];
+  indent?: boolean;
+  /** Pause after the last line before continuing. */
+  hold?: number;
+}) {
   const [line, setLine] = useState(0);
   const [chars, setChars] = useState(0);
   const doneRef = useRef(false);
@@ -28,11 +38,11 @@ function Intro({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   useEffect(() => {
-    if (line >= TERMLINK_INTRO.length) {
-      const t = window.setTimeout(finish, 450);
+    if (line >= lines.length) {
+      const t = window.setTimeout(finish, hold);
       return () => window.clearTimeout(t);
     }
-    const text = TERMLINK_INTRO[line];
+    const text = lines[line];
     const typed = text.startsWith(">");
     if (chars >= text.length) {
       const t = window.setTimeout(() => {
@@ -50,7 +60,7 @@ function Intro({ onDone }: { onDone: () => void }) {
       typed ? 38 : 16,
     );
     return () => window.clearTimeout(t);
-  }, [line, chars, finish]);
+  }, [line, chars, finish, lines, hold]);
 
   useEffect(() => {
     const skip = (e: Event) => {
@@ -66,8 +76,8 @@ function Intro({ onDone }: { onDone: () => void }) {
   }, [finish]);
 
   return (
-    <div className="term">
-      {TERMLINK_INTRO.slice(0, line + 1).map((text, i) => (
+    <div className="term" style={indent ? { paddingLeft: "1.5em" } : undefined}>
+      {lines.slice(0, line + 1).map((text, i) => (
         <div key={i} className="line">
           {i < line ? text : text.slice(0, chars)}
           {i === line && <span className="cursor" />}
@@ -80,17 +90,23 @@ function Intro({ onDone }: { onDone: () => void }) {
 export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: string; initial: PublicBoard }) {
   const firmware = useContext(FirmwareContext);
   const router = useRouter();
-  const [phase, setPhase] = useState<"intro" | "dump" | "board">(firmware === "uos" ? "intro" : "dump");
+  const [phase, setPhase] = useState<"intro" | "dump" | "board" | "logon">(firmware === "uos" ? "intro" : "dump");
   const [board, setBoard] = useState(initial);
   const [rows, setRows] = useState(0);
   const [pos, setPos] = useState(0);
   const [busy, setBusy] = useState(false);
   const header = HACK_HEADER[firmware];
+  const R = board.rows;
+
+  const enterTerminal = useCallback(() => {
+    router.push(`/${slug}`);
+    router.refresh();
+  }, [router, slug]);
 
   // Memory dump prints row by row.
   useEffect(() => {
     if (phase !== "dump") return;
-    if (rows >= ROWS_PER_COLUMN) {
+    if (rows >= R) {
       setPhase("board");
       return;
     }
@@ -99,7 +115,7 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
       sfx.tick();
     }, 28);
     return () => window.clearTimeout(t);
-  }, [phase, rows]);
+  }, [phase, rows, R]);
 
   const brackets = useMemo(() => findBracketGroups(board.grid), [board.grid]);
 
@@ -128,10 +144,16 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
         setBoard(next);
         if (next.status === "success") {
           sfx.good();
-          window.setTimeout(() => {
-            router.push(`/${slug}`);
-            router.refresh();
-          }, 2200);
+          if (firmware === "uos") {
+            // Vanilla holds the success text for at least 2.5s, then plays the logon intro.
+            window.setTimeout(() => setPhase("logon"), 2600);
+          } else {
+            // FO4/76: straight to the menu, with "> Password Accepted." at the prompt.
+            window.setTimeout(() => {
+              router.push(`/${slug}?accepted=1`);
+              router.refresh();
+            }, 1800);
+          }
         } else if (next.status === "locked") {
           sfx.bad();
           window.setTimeout(() => router.refresh(), 2600);
@@ -142,7 +164,7 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
         setBusy(false);
       }
     },
-    [board, boardId, busy, phase, router, slug],
+    [board, boardId, busy, firmware, phase, router, slug],
   );
 
   useEffect(() => {
@@ -154,17 +176,17 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
         return;
       }
       if (phase !== "board") return;
-      const col = Math.floor(pos / (ROW_CHARS * ROWS_PER_COLUMN));
-      const inCol = pos % (ROW_CHARS * ROWS_PER_COLUMN);
+      const col = Math.floor(pos / (ROW_CHARS * R));
+      const inCol = pos % (ROW_CHARS * R);
       const row = Math.floor(inCol / ROW_CHARS);
       const x = inCol % ROW_CHARS;
-      const at = (c: number, r: number, xx: number) => c * ROW_CHARS * ROWS_PER_COLUMN + r * ROW_CHARS + xx;
+      const at = (c: number, r: number, xx: number) => c * ROW_CHARS * R + r * ROW_CHARS + xx;
       let next = pos;
       if (e.key === "ArrowLeft") next = x > 0 ? pos - 1 : col > 0 ? at(col - 1, row, ROW_CHARS - 1) : pos;
       else if (e.key === "ArrowRight")
         next = x < ROW_CHARS - 1 ? pos + 1 : col < COLUMNS - 1 ? at(col + 1, row, 0) : pos;
       else if (e.key === "ArrowUp") next = row > 0 ? pos - ROW_CHARS : pos;
-      else if (e.key === "ArrowDown") next = row < ROWS_PER_COLUMN - 1 ? pos + ROW_CHARS : pos;
+      else if (e.key === "ArrowDown") next = row < R - 1 ? pos + ROW_CHARS : pos;
       else if (e.key === "Enter") {
         e.preventDefault();
         void choose(pos);
@@ -182,9 +204,21 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(BACK_EVENT, back);
     };
-  }, [choose, phase, pos, router, slug]);
+  }, [choose, phase, pos, router, slug, R]);
 
   if (phase === "intro") return <Intro onDone={() => setPhase("dump")} />;
+  if (phase === "logon") {
+    // FO3/NV computers_intro_*: WELCOME / LOGON ADMIN / ENTER PASSWORD NOW / password, a blank line apart.
+    const stars = "*".repeat(board.words[0]?.length ?? 8);
+    return (
+      <Intro
+        indent
+        hold={900}
+        onDone={enterTerminal}
+        lines={["WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK", "", ">LOGON ADMIN", "", "ENTER PASSWORD NOW", "", `>${stars}`]}
+      />
+    );
+  }
 
   if (board.status === "locked" && firmware === "uos") {
     return (
@@ -197,7 +231,7 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
 
   const warning = firmware === "uos" && board.attemptsLeft === 1 && board.status === "active";
   const columns = Array.from({ length: COLUMNS }, (_, c) =>
-    Array.from({ length: ROWS_PER_COLUMN }, (_, r) => (c * ROWS_PER_COLUMN + r) * ROW_CHARS),
+    Array.from({ length: R }, (_, r) => (c * R + r) * ROW_CHARS),
   );
 
   return (
@@ -255,6 +289,7 @@ export function HackScreen({ slug, boardId, initial }: { slug: string; boardId: 
             <div key={i}>{l}</div>
           ))}
           {board.status === "locked" && firmware === "termlink" && <div>This terminal has locked you out.</div>}
+          {firmware === "uos" && <div>&nbsp;</div>}
           <div>
             &gt;{board.status === "active" && phase === "board" ? echo : ""}
             <span className="cursor" />

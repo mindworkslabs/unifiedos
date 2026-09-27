@@ -104,7 +104,7 @@ export async function ownerLogon(slug: string, values: Record<string, string>): 
   session.userId = row.owner.id;
   await session.save();
   await logEvent(row.terminal.id, "owner", "LOGON");
-  return { redirect: `/${row.terminal.slug}` };
+  return { redirect: `/${row.terminal.slug}?accepted=1` };
 }
 
 /** Log off: owners end their session; intruders drop their Termlink access to this terminal. */

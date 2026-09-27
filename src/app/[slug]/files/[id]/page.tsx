@@ -1,5 +1,5 @@
 import { deleteNode } from "@/app/actions/files";
-import type { Block, MenuItem } from "@/components/screen";
+import { backItem, type Block, type MenuItem } from "@/components/screen";
 import { Terminal } from "@/components/Terminal";
 import { logEvent, requireRead } from "@/lib/access";
 import { folderScreen, getNodeOr404 } from "@/lib/folders";
@@ -28,7 +28,7 @@ export default async function FileView({ params }: { params: Promise<{ slug: str
       { label: "[Delete]", confirm: `Delete "${node.title}"?`, action: deleteNode.bind(null, terminal.slug, node.id) },
     );
   }
-  items.push({ label: "Back", href: back });
+  items.push(...backItem(terminal.firmware, back));
 
   const blocks: Block[] = [
     ...headerFor(access),

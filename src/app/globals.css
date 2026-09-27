@@ -37,9 +37,17 @@ body {
 /* ---------------------------------------------------------------- palette */
 
 .crt {
-  --ph: #1aff80;
-  --bg: #021a0b;
-  --bg-hi: #083a1c;
+  /* FO3/NV, sampled from 4K screenshots: mint text on a lit dark-green screen, strong vignette. */
+  --ph: #36e68c;
+  --bg: #030c07;
+  --bg-hi: #0f3421;
+  --glow-1: 0.12em;
+  --glow-2: 0.55em;
+  --scan-n: 130; /* fRenderedTerminalScanlineScale */
+  --scan-a: 0.16;
+  --vig: 0.62;
+  --glare: rgba(120, 210, 170, 0.1);
+  --radius: 4% / 5.5%;
   --font: var(--font-fixedsys), ui-monospace, monospace;
   --cols: 30.8; /* ems across the screen, padding included → ~54 columns of Fixedsys (0.5em wide) */
   --lh: 1.16;
@@ -47,13 +55,24 @@ body {
   --cur-h: 0.68em;
   --cur-v: -0.02em;
   --ch: 0.5em;
+  --item-pad: 0.12em;
+  --item-ls: 0;
   --blink: 400ms;
   --sel-alpha: 88%;
 }
 .crt[data-firmware="termlink"] {
-  --ph: #14ff17;
-  --bg: #021204;
-  --bg-hi: #06300b;
+  /* FO4, sampled: pure green rgb(0,248,0) on a neutral near-black screen, fine scanlines,
+     tight green halo, little vignette, a bulging TV-shaped glass. */
+  --ph: #00f800;
+  --bg: #050706;
+  --bg-hi: #0a100b;
+  --glow-1: 0.1em;
+  --glow-2: 0.38em;
+  --scan-n: 240;
+  --scan-a: 0.24;
+  --vig: 0.35;
+  --glare: rgba(255, 255, 255, 0.035);
+  --radius: 9% / 12%;
   --font: var(--font-sharetech), ui-monospace, monospace;
   --cols: 31.3; /* Share Tech Mono is 0.54em wide → 51 columns, as in Fallout 4 */
   --lh: 1.12;
@@ -61,7 +80,9 @@ body {
   --cur-h: 0.71em;
   --cur-v: -0.05em;
   --ch: 0.54em;
-  --blink: 333ms;
+  --item-pad: 0.1em;
+  --item-ls: 0.04em; /* MenuItemListEntry letterSpacing 1 at 26px */
+  --blink: 208ms; /* BlinkingCursor: 5 frames on / 5 off at 24fps */
   --sel-alpha: 100%;
 }
 .crt[data-phosphor="amber"] {
@@ -107,7 +128,7 @@ body {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 4% / 5.5%;
+  border-radius: var(--radius);
   background: radial-gradient(ellipse at 50% 45%, var(--bg-hi) 0%, var(--bg) 75%);
   box-shadow:
     inset 0 0 0.6em rgba(0, 0, 0, 0.9),
@@ -137,8 +158,8 @@ body {
   font-feature-settings: "liga" 0, "calt" 0;
   padding: 1.3em 1.9em 1.1em;
   text-shadow:
-    0 0 0.12em color-mix(in srgb, var(--ph) 85%, transparent),
-    0 0 0.55em color-mix(in srgb, var(--ph) 40%, transparent);
+    0 0 var(--glow-1) color-mix(in srgb, var(--ph) 85%, transparent),
+    0 0 var(--glow-2) color-mix(in srgb, var(--ph) 40%, transparent);
   animation: power-on 700ms ease-out both;
   transform-origin: 50% 50%;
 }
@@ -166,8 +187,8 @@ body {
   pointer-events: none;
 }
 .scanlines {
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.28) 50%, transparent 100%);
-  background-size: 100% calc(100% / 130);
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, var(--scan-a)) 50%, transparent 100%);
+  background-size: 100% calc(100% / var(--scan-n));
   mix-blend-mode: multiply;
 }
 .roll {
@@ -188,11 +209,11 @@ body {
   animation: roll 9s linear infinite;
 }
 .vignette {
-  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, var(--vig)) 100%);
 }
 .glass {
   background:
-    radial-gradient(ellipse at 30% 12%, rgba(255, 255, 255, 0.07), transparent 45%),
+    radial-gradient(ellipse at 72% 16%, var(--glare), transparent 38%),
     linear-gradient(170deg, rgba(255, 255, 255, 0.03), transparent 35%);
 }
 
@@ -292,6 +313,59 @@ body {
   color: var(--hint);
   opacity: 0.8;
 }
+.hints {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+.hints > .group:last-child {
+  justify-content: flex-end;
+}
+.hints .center {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+}
+/* FO4 TerminalButtons: "[Tab) EXIT]" — green, corner brackets, translucent dark fill, centred under the monitor. */
+.crt .fo4-btn {
+  position: relative;
+  padding: 6px 12px 5px;
+  background: rgba(40, 70, 38, 0.55);
+  color: var(--ph);
+  font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  font-stretch: condensed;
+  font-size: 19px;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: 1px 1px 1px #000;
+}
+.crt .fo4-btn b {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.crt .fo4-btn::before,
+.crt .fo4-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border: 3px solid var(--ph);
+  box-shadow: 1px 1px 1px #000;
+}
+.crt .fo4-btn::before {
+  left: 0;
+  border-right: 0;
+}
+.crt .fo4-btn::after {
+  right: 0;
+  border-left: 0;
+}
+.crt .fo4-btn:hover,
+.crt .fo4-btn:focus-visible {
+  text-decoration: none;
+  background: rgba(60, 100, 56, 0.7);
+}
 .hints .group {
   display: flex;
   gap: 18px;
@@ -348,15 +422,55 @@ body {
   animation: blink 1.25s steps(1) infinite;
 }
 
+.menu-wrap {
+  position: relative;
+}
 .menu {
+  --row-h: calc(var(--lh) * 1em + var(--item-pad) * 2);
   list-style: none;
   margin: 0.2em 0 0;
   padding: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.menu::-webkit-scrollbar {
+  display: none;
+}
+/* FO4 ScrollArrow: small triangles in the left margin when the 12-row list overflows. */
+.scroll-arrow {
+  position: absolute;
+  left: -1.1em;
+  width: 0;
+  height: 0;
+  border-left: 0.3em solid transparent;
+  border-right: 0.3em solid transparent;
+  filter: drop-shadow(0 0 0.2em var(--ph));
+}
+.scroll-arrow.up {
+  top: 0.45em;
+  border-bottom: 0.6em solid var(--ph);
+}
+.scroll-arrow.down {
+  bottom: 0.2em;
+  border-top: 0.6em solid var(--ph);
+}
+.paged {
+  white-space: pre;
+  overflow: hidden;
+}
+/* NV computers_separator: exactly as wide as the welcome text, 10px below it. */
+.underlined {
+  display: inline-block;
+  padding-bottom: 0.3em;
+  margin-bottom: 0.45em;
+  border-bottom: max(1px, 0.07em) solid var(--ph);
+  box-shadow: 0 0.35em 0.35em -0.35em var(--ph);
 }
 .menu li {
   display: block;
-  padding: 0 0.3em;
+  padding: var(--item-pad) 0.3em;
   margin: 0 -0.3em;
+  letter-spacing: var(--item-ls);
   white-space: pre-wrap;
   word-break: break-word;
   cursor: pointer;
@@ -441,7 +555,7 @@ body {
 .hack-grid {
   display: flex;
   gap: var(--ch); /* one character between the two dump columns (column 2 starts at x=342 = 20 cells) */
-  flex: 1 1 auto;
+  flex: 0 0 auto; /* the log's prompt sits on the last dump row */
   min-height: 0;
 }
 .hack-col {

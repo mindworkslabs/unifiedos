@@ -1,5 +1,5 @@
 import "server-only";
-import type { Block, MenuItem } from "@/components/screen";
+import { backItem, type Block, type MenuItem } from "@/components/screen";
 import type { Access } from "./access";
 import { listMail } from "./mail";
 import { formatStamp, headerFor } from "./screens";
@@ -12,7 +12,7 @@ export async function mailboxScreen(access: Access, box: "inbox" | "sent"): Prom
     const flag = box === "inbox" && !m.readAt ? "*" : " ";
     return { label: `${flag}${formatStamp(m.createdAt).slice(5, 10)} ${who} ${m.subject}`.slice(0, 50), href: `${base}/mail/${m.id}` };
   });
-  items.push({ label: "Back", href: `${base}/mail` });
+  items.push(...backItem(access.terminal.firmware, `${base}/mail`));
   return [
     ...headerFor(access),
     { t: "line", text: box === "inbox" ? "Inbox" : "Sent Messages" },
