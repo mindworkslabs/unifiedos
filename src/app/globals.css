@@ -1,0 +1,473 @@
+/*
+ * RobCo terminal look. Values come from docs/research/unified-os.md §3.
+ * Phosphor colour and font are driven by data attributes on .crt:
+ *   data-firmware="uos|termlink"   data-phosphor="green|amber|white|blue"   data-fx="on|off"
+ */
+
+:root {
+  --room: #070907;
+  --case-1: #3d4436;
+  --case-2: #262b22;
+  --case-3: #14170f;
+  --hint: #b9c4b4;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(ellipse at 50% 30%, #121611 0%, var(--room) 70%);
+  color: var(--hint);
+}
+
+body {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  font-family: var(--font-fixedsys), ui-monospace, monospace;
+}
+
+/* ---------------------------------------------------------------- palette */
+
+.crt {
+  --ph: #1aff80;
+  --bg: #021a0b;
+  --bg-hi: #083a1c;
+  --font: var(--font-fixedsys), ui-monospace, monospace;
+  --cols: 30.8; /* ems across the screen, padding included → ~54 columns of Fixedsys (0.5em wide) */
+  --lh: 1.16;
+  --blink: 400ms;
+  --sel-alpha: 88%;
+}
+.crt[data-firmware="termlink"] {
+  --ph: #14ff17;
+  --bg: #021204;
+  --bg-hi: #06300b;
+  --font: var(--font-sharetech), ui-monospace, monospace;
+  --cols: 31.3; /* Share Tech Mono is 0.54em wide → 51 columns, as in Fallout 4 */
+  --lh: 1.12;
+  --blink: 333ms;
+  --sel-alpha: 100%;
+}
+.crt[data-phosphor="amber"] {
+  --ph: #ffb642;
+  --bg: #1a0f02;
+  --bg-hi: #3a2408;
+}
+.crt[data-phosphor="white"] {
+  --ph: #dfeee8;
+  --bg: #0b0f0e;
+  --bg-hi: #1d2624;
+}
+.crt[data-phosphor="blue"] {
+  --ph: #52c8ff;
+  --bg: #020f1a;
+  --bg-hi: #082a44;
+}
+
+/* ---------------------------------------------------------------- monitor */
+
+.crt {
+  width: min(100%, calc((100dvh - 110px) * 4 / 3), 1100px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.bezel {
+  position: relative;
+  padding: clamp(10px, 3.2%, 38px);
+  border-radius: clamp(14px, 3%, 34px);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07), transparent 40%),
+    linear-gradient(180deg, var(--case-1), var(--case-2) 55%, var(--case-3));
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.7),
+    inset 0 2px 1px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+}
+
+.screen {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 4% / 5.5%;
+  background: radial-gradient(ellipse at 50% 45%, var(--bg-hi) 0%, var(--bg) 75%);
+  box-shadow:
+    inset 0 0 0.6em rgba(0, 0, 0, 0.9),
+    inset 0 0 3em rgba(0, 0, 0, 0.6),
+    0 0 0 3px #0b0d09,
+    0 0 40px color-mix(in srgb, var(--ph) 12%, transparent);
+  container-type: size;
+  color: var(--ph);
+  cursor: default;
+}
+
+/* Portrait phones: a taller screen with fewer, larger columns. */
+@media (max-aspect-ratio: 4/5) {
+  .screen {
+    aspect-ratio: 3 / 4.2;
+  }
+}
+
+.screen-inner {
+  position: absolute;
+  inset: 0;
+  /* cqw here refers to .screen, the nearest size container */
+  font-family: var(--font);
+  font-size: calc(100cqw / var(--cols));
+  line-height: var(--lh);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  padding: 1.3em 1.9em 1.1em;
+  text-shadow:
+    0 0 0.12em color-mix(in srgb, var(--ph) 85%, transparent),
+    0 0 0.55em color-mix(in srgb, var(--ph) 40%, transparent);
+  animation: power-on 700ms ease-out both;
+  transform-origin: 50% 50%;
+}
+
+@container (max-width: 560px) {
+  .screen-inner {
+    font-size: calc(100cqw / (var(--cols) * 0.74));
+    padding: 1em 1.1em 0.9em;
+  }
+  .screen-inner .hack {
+    font-size: 0.62em;
+  }
+}
+
+.crt[data-fx="on"] .screen-inner {
+  animation:
+    power-on 700ms ease-out both,
+    flicker 4s steps(1) infinite 700ms;
+}
+
+/* overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scanlines {
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.28) 50%, transparent 100%);
+  background-size: 100% calc(100% / 130);
+  mix-blend-mode: multiply;
+}
+.roll {
+  display: none;
+  top: -20%;
+  height: 18%;
+  bottom: auto;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--ph) 5%, transparent) 45%,
+    color-mix(in srgb, var(--ph) 8%, transparent) 55%,
+    transparent
+  );
+}
+.crt[data-fx="on"] .roll {
+  display: block;
+  animation: roll 9s linear infinite;
+}
+.vignette {
+  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+.glass {
+  background:
+    radial-gradient(ellipse at 30% 12%, rgba(255, 255, 255, 0.07), transparent 45%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.03), transparent 35%);
+}
+
+.power-off .screen-inner {
+  animation: power-off 450ms ease-in forwards;
+}
+
+@keyframes power-on {
+  0% {
+    transform: scale(1, 0.004);
+    filter: brightness(6);
+    opacity: 0.2;
+  }
+  35% {
+    transform: scale(1, 0.004);
+    filter: brightness(6);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1, 1);
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes power-off {
+  0% {
+    transform: none;
+    filter: none;
+  }
+  60% {
+    transform: scale(1, 0.004);
+    filter: brightness(5);
+  }
+  100% {
+    transform: scale(0, 0.004);
+    filter: brightness(8);
+    opacity: 0;
+  }
+}
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  31% {
+    opacity: 0.96;
+  }
+  32% {
+    opacity: 1;
+  }
+  67% {
+    opacity: 0.975;
+  }
+  68% {
+    opacity: 1;
+  }
+}
+@keyframes roll {
+  from {
+    top: -20%;
+  }
+  to {
+    top: 110%;
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-inner,
+  .crt[data-fx="on"] .screen-inner {
+    animation: none;
+  }
+  .crt[data-fx="on"] .roll {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- hint bar (outside the monitor) */
+
+.hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 18px;
+  padding: 0 6px;
+  font-family: var(--font-sharetech), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hint);
+  opacity: 0.8;
+}
+.hints .group {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.hints button {
+  all: unset;
+  cursor: pointer;
+}
+.hints button:hover,
+.hints button:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- terminal text */
+
+.term {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.term-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.term-scroll::-webkit-scrollbar {
+  display: none;
+}
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: calc(var(--lh) * 1em);
+}
+.center {
+  text-align: center;
+}
+.rule {
+  height: 0.09em;
+  margin: 0.35em 0 0.55em;
+  background: var(--ph);
+  box-shadow: 0 0 0.3em var(--ph);
+  opacity: 0.85;
+}
+.gap {
+  height: calc(var(--lh) * 1em);
+}
+.dim {
+  opacity: 0.62;
+}
+.blinking {
+  animation: blink 1.25s steps(1) infinite;
+}
+
+.menu {
+  list-style: none;
+  margin: 0.2em 0 0;
+  padding: 0;
+}
+.menu li {
+  display: block;
+  padding: 0 0.3em;
+  margin: 0 -0.3em;
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: pointer;
+}
+.menu li[aria-disabled="true"] {
+  cursor: default;
+}
+.sel,
+.menu li.sel {
+  background: color-mix(in srgb, var(--ph) var(--sel-alpha), transparent);
+  color: var(--bg);
+  text-shadow: none;
+  box-shadow: 0 0 0.45em color-mix(in srgb, var(--ph) 55%, transparent);
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.05em;
+  vertical-align: -0.12em;
+  background: var(--ph);
+  box-shadow: 0 0 0.35em var(--ph);
+  animation: blink calc(var(--blink) * 2) steps(1) infinite;
+}
+
+.prompt {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.5em;
+  padding-top: 0.4em;
+  min-height: 1.6em;
+  white-space: pre-wrap;
+}
+
+/* inputs are real elements, styled to look like terminal text */
+.field {
+  position: relative;
+  display: flex;
+  white-space: pre;
+}
+.field input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  font: inherit;
+}
+.editor {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ph);
+  caret-color: var(--ph);
+  font: inherit;
+  line-height: inherit;
+  text-shadow: inherit;
+  white-space: pre-wrap;
+}
+.editor::selection,
+.screen ::selection {
+  background: var(--ph);
+  color: var(--bg);
+}
+
+/* ---------------------------------------------------------------- hacking board */
+
+.hack {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* 5 header lines + 17 dump rows must fit, like the 920x630 FO3/NV hacking layout */
+  font-size: 0.8em;
+  --lh: 1.1;
+  line-height: var(--lh);
+}
+.hack-grid {
+  display: flex;
+  gap: 1em;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.hack-col {
+  white-space: pre;
+}
+.hack-col .row {
+  display: block;
+}
+.hack-col .ch {
+  cursor: pointer;
+}
+.hack-log {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  white-space: pre;
+  overflow: hidden;
+  min-width: 7em;
+}
+.locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1.2em;
+  text-align: center;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
