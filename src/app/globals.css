@@ -43,6 +43,10 @@ body {
   --font: var(--font-fixedsys), ui-monospace, monospace;
   --cols: 30.8; /* ems across the screen, padding included → ~54 columns of Fixedsys (0.5em wide) */
   --lh: 1.16;
+  --cur-w: 0.5em;
+  --cur-h: 0.68em;
+  --cur-v: -0.02em;
+  --ch: 0.5em;
   --blink: 400ms;
   --sel-alpha: 88%;
 }
@@ -53,6 +57,10 @@ body {
   --font: var(--font-sharetech), ui-monospace, monospace;
   --cols: 31.3; /* Share Tech Mono is 0.54em wide → 51 columns, as in Fallout 4 */
   --lh: 1.12;
+  --cur-w: 0.48em;
+  --cur-h: 0.71em;
+  --cur-v: -0.05em;
+  --ch: 0.54em;
   --blink: 333ms;
   --sel-alpha: 100%;
 }
@@ -364,12 +372,13 @@ body {
   box-shadow: 0 0 0.45em color-mix(in srgb, var(--ph) 55%, transparent);
 }
 
+/* FO3/NV: a solid 17x17 px block (one character cell wide) blinking every 400ms.
+   FO4: a 12.5x18.5 px block on a 26px font. */
 .cursor {
   display: inline-block;
-  width: 0.55em;
-  height: 1em;
-  margin-left: 0.05em;
-  vertical-align: -0.12em;
+  width: var(--cur-w);
+  height: var(--cur-h);
+  vertical-align: var(--cur-v);
   background: var(--ph);
   box-shadow: 0 0 0.35em var(--ph);
   animation: blink calc(var(--blink) * 2) steps(1) infinite;
@@ -431,7 +440,7 @@ body {
 }
 .hack-grid {
   display: flex;
-  gap: 1em;
+  gap: var(--ch); /* one character between the two dump columns (column 2 starts at x=342 = 20 cells) */
   flex: 1 1 auto;
   min-height: 0;
 }
