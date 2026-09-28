@@ -1,0 +1,9 @@
+.git
+.next
+node_modules
+.pglite
+.env
+.env.*
+!.env.example
+docs
+*.log

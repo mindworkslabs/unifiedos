@@ -1,4 +1,5 @@
-/** Apply migrations to the production database: DATABASE_URL=... npm run db:migrate */
+/** Apply migrations to the production database: DATABASE_URL=... npm run db:migrate
+ *  Plain JS so it also runs inside the production Docker image (no TypeScript tooling there). */
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";

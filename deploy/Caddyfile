@@ -1,0 +1,5 @@
+# Caddy terminates HTTPS (Let's Encrypt, automatic) and proxies to the Next.js server.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

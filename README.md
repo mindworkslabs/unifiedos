@@ -23,12 +23,22 @@ npm run lint
 npm run build
 ```
 
-## Deploy (e.g. Vercel + Neon)
+## Deploy
 
-1. Create a Postgres database and set `DATABASE_URL`.
-2. Set `SESSION_SECRET` to 32+ random characters (`openssl rand -base64 48`).
-3. Apply migrations: `DATABASE_URL=... npm run db:migrate`.
-4. Deploy. After changing `src/db/schema.ts`, run `npm run db:generate` to create a new migration.
+### DigitalOcean droplet (Docker Compose)
+Setup is one command on a fresh Ubuntu droplet: the Next.js app, Postgres, and Caddy with automatic HTTPS.
+
+```bash
+git clone https://github.com/mindworkslabs/unifiedos.git /opt/unifiedos && cd /opt/unifiedos
+sudo ./deploy/setup-droplet.sh termlink.example.com   # omit the domain to serve HTTP on the IP
+```
+
+See **[docs/deploy-digitalocean.md](docs/deploy-digitalocean.md)** for the full guide: DNS, updates, backups and troubleshooting.
+
+### Any Node host with Postgres
+1. Set `DATABASE_URL` and `SESSION_SECRET` (32+ random characters, e.g. `openssl rand -hex 32`).
+2. Run `npm run build && npm run db:migrate && npm start`.
+3. After changing `src/db/schema.ts`, run `npm run db:generate` to create a new migration.
 
 ## Controls
 

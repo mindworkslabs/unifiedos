@@ -9,6 +9,14 @@ export interface SessionData {
   intrusions?: Record<string, number>;
 }
 
+/**
+ * Secure (HTTPS-only) cookies in production. Set COOKIE_SECURE=false only when serving over
+ * plain HTTP, e.g. a droplet reached by IP address before a domain and certificate are set up.
+ */
+function secureCookies() {
+  return process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false";
+}
+
 const DEV_SECRET = "dev-only-secret-change-me-dev-only-secret-change-me";
 
 function sessionOptions(): SessionOptions {
@@ -19,7 +27,7 @@ function sessionOptions(): SessionOptions {
   return {
     password,
     cookieName: "uos_session",
-    cookieOptions: { secure: process.env.NODE_ENV === "production", sameSite: "lax", httpOnly: true },
+    cookieOptions: { secure: secureCookies(), sameSite: "lax", httpOnly: true },
   };
 }
 
