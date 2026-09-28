@@ -17,9 +17,18 @@ The whole stack runs on one droplet with Docker Compose. There are three contain
 
 ## 2. Point your domain at it (optional, but needed for HTTPS)
 
-At your DNS provider, create an **A record**, e.g. `termlink.example.com`, pointing to the droplet's IP. If DigitalOcean manages your DNS, do this under **Networking → Domains**.
+For **unifiedos.com**, create two DNS records at your registrar, or in DigitalOcean under **Networking → Domains** if you move the nameservers there:
 
-Wait until `ping termlink.example.com` answers from the droplet's IP. Caddy can only get a certificate once DNS resolves.
+| Type | Name | Value |
+|---|---|---|
+| A | `@` (unifiedos.com) | your droplet's IP |
+| A | `www` | your droplet's IP |
+
+Wait until `ping unifiedos.com` and `ping www.unifiedos.com` both answer from the droplet's IP. Caddy can only get certificates once DNS resolves.
+
+`www.unifiedos.com` permanently redirects to `https://unifiedos.com`. The setup script turns this on automatically for a bare domain; the setting is `WWW_DOMAIN` in `.env`.
+
+For a subdomain instead (e.g. `termlink.example.com`), one A record is enough.
 
 No domain yet? Skip this step. The site will then run over plain HTTP on the droplet's IP address.
 
@@ -39,9 +48,9 @@ The repository is private, so `git clone` needs credentials. Either option works
 
 ## 4. Run the setup script
 
-With a domain:
+With your domain:
 ```bash
-sudo ./deploy/setup-droplet.sh termlink.example.com
+sudo ./deploy/setup-droplet.sh unifiedos.com
 ```
 Without a domain (plain HTTP on the IP address):
 ```bash
@@ -55,7 +64,7 @@ The script:
 4. writes `/opt/unifiedos/.env` with a random database password and session secret;
 5. builds and starts everything.
 
-The first build takes 3–6 minutes on a 1 GB droplet. When it finishes, open `https://termlink.example.com` (or `http://YOUR_DROPLET_IP`) and register your first terminal.
+The first build takes 3–6 minutes on a 1 GB droplet. When it finishes, open `https://unifiedos.com` (or `http://YOUR_DROPLET_IP`) and register your first terminal.
 
 Check it's healthy:
 ```bash
@@ -85,7 +94,8 @@ Backups stay on the droplet. To keep copies elsewhere, sync `backups/` to Digita
 1. Point the domain's A record at the droplet (step 2).
 2. Edit `/opt/unifiedos/.env` and set:
    ```
-   DOMAIN=termlink.example.com
+   DOMAIN=unifiedos.com
+   WWW_DOMAIN=www.unifiedos.com
    COOKIE_SECURE=true
    ```
 3. Run `docker compose up -d`. Caddy fetches the certificate and HTTP starts redirecting to HTTPS.
@@ -95,6 +105,7 @@ Backups stay on the droplet. To keep copies elsewhere, sync `backups/` to Digita
 | Variable | Meaning |
 |---|---|
 | `DOMAIN` | The site's hostname, or `:80` for plain HTTP by IP |
+| `WWW_DOMAIN` | Optional second hostname that redirects to `DOMAIN`, e.g. `www.unifiedos.com` |
 | `COOKIE_SECURE` | `true` for HTTPS. Must be `false` on plain HTTP, or logins won't stick. |
 | `POSTGRES_PASSWORD` | The database password (generated). Don't change it after the first start: the database keeps its original password. |
 | `SESSION_SECRET` | Signs login cookies (generated). Changing it logs everyone out and ends intruder sessions. |

@@ -44,14 +44,18 @@ fi
 
 if [[ ! -f .env ]]; then
   echo ">> Writing .env with fresh secrets"
+  WWW_LINE=""
   if [[ -n "$DOMAIN_ARG" ]]; then
     DOMAIN="$DOMAIN_ARG"; COOKIE_SECURE=true
+    # Apex domain (e.g. unifiedos.com): also answer on www. and redirect it to the apex.
+    if [[ "$DOMAIN" =~ ^[^.]+\.[^.]+$ ]]; then WWW_LINE="WWW_DOMAIN=www.$DOMAIN"; fi
   else
     DOMAIN=":80"; COOKIE_SECURE=false
   fi
   umask 077
   cat > .env <<ENV
 DOMAIN=$DOMAIN
+$WWW_LINE
 COOKIE_SECURE=$COOKIE_SECURE
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
 SESSION_SECRET=$(openssl rand -hex 32)
@@ -66,7 +70,7 @@ docker compose up -d --build
 echo
 echo "UnifiedOS is starting. Check status with:  docker compose ps"
 if [[ -n "$DOMAIN_ARG" ]]; then
-  echo "Open https://$DOMAIN_ARG  (make sure its DNS A record points at this droplet)."
+  echo "Open https://$DOMAIN_ARG  (make sure its DNS A records point at this droplet)."
 else
   echo "Open http://$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
 fi

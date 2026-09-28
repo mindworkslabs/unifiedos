@@ -3,3 +3,9 @@
 	encode zstd gzip
 	reverse_proxy app:3000
 }
+
+# Optional www → apex redirect (e.g. www.unifiedos.com → unifiedos.com). Set WWW_DOMAIN in .env;
+# the default is an unused placeholder host so this block is inert.
+{$WWW_DOMAIN:http://www.unused.invalid} {
+	redir https://{$DOMAIN}{uri} permanent
+}

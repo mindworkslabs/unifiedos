@@ -30,7 +30,7 @@ Setup is one command on a fresh Ubuntu droplet: the Next.js app, Postgres, and C
 
 ```bash
 git clone https://github.com/mindworkslabs/unifiedos.git /opt/unifiedos && cd /opt/unifiedos
-sudo ./deploy/setup-droplet.sh termlink.example.com   # omit the domain to serve HTTP on the IP
+sudo ./deploy/setup-droplet.sh unifiedos.com   # omit the domain to serve HTTP on the IP
 ```
 
 See **[docs/deploy-digitalocean.md](docs/deploy-digitalocean.md)** for the full guide: DNS, updates, backups and troubleshooting.

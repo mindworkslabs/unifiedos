@@ -38,6 +38,8 @@ services:
     environment:
       # Your domain (HTTPS certificates are issued automatically), or ":80" for plain HTTP by IP.
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      # Optional: www.<domain>, redirected to DOMAIN. Must never be empty (Caddy rejects it).
+      WWW_DOMAIN: ${WWW_DOMAIN:-http://www.unused.invalid}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

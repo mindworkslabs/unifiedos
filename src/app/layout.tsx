@@ -15,8 +15,8 @@ const shareTech = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: "RobCo Termlink", template: "%s | RobCo Termlink" },
-  description: "RobCo Industries Unified Operating System. Your terminal on the Termlink network.",
+  title: { default: "UnifiedOS", template: "%s | UnifiedOS" },
+  description: "UnifiedOS: your own retro-futuristic terminal. Keep files, send mail, and guard your terminal against intruders.",
 };
 
 export const viewport: Viewport = { themeColor: "#070907" };
